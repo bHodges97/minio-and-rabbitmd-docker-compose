@@ -1,0 +1,31 @@
+version: '2'
+services:
+  minio:
+    depends_on:
+      - rabbitmq
+    image: hackathon/minio
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./config.json:/root/.mc/config.json
+      - ./amqpconfig:/tmp/config.json #data/.minio.sys/config/config.json
+      - ./notifications.xml:/tmp/notifications.xml #data/.minio.sys/buckets/test/notifications.xml
+    environment:
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: miniosecretkey
+    command: server /data
+  rabbitmq:
+    image: rabbitmq:3.6-management-alpine
+    hostname: rabbitmq  # See https://hub.docker.com/_/rabbitmq/
+    expose:
+      - "5672"
+      - "15672"
+    ports:
+      - "15672:15672"
+    tmpfs:
+      - /var/lib/rabbitmq
+    volumes:
+      - /etc/rabbitmq
+    read_only: true
+
+
