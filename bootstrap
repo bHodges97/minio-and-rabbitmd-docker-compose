@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+set -eu
+
+here="$(cd $(dirname $0) && pwd)"
+
+function docker_compose() {
+  (cd ${here} && docker-compose --log-level ERROR --no-ansi "$@")
+}
+
+function on_minio() {
+  docker_compose exec minio "$@"
+}
+
+function on_rabbitmq() {
+  docker_compose exec rabbitmq "$@"
+}
+
+function wait_for() {
+  until on_minio wait-for-it --quiet "$@" ; do
+    sleep 1
+  done
+}
+
+echo "Destroying Docker Compose environment ..."
+docker_compose rm --force --stop -v
+
+echo "Building container image ..."
+docker build \
+       --file ${here}/Dockerfile \
+       --tag hackathon/minio \
+       --quiet \
+       ${here}
+
+echo "Starting Docker Compose environment ..."
+docker_compose up --detach
+
+echo "Waiting for RabbitMQ ..."
+wait_for rabbitmq:5672
+
+echo "Waiting for MinIO ..."
+wait_for minio:9000
+
+echo "Creating RabbitMQ exchange ..."
+on_rabbitmq \
+  rabbitmqadmin --quiet declare exchange name=minio type=topic durable=true
+
+echo "Creating RabbitMQ queue ..."
+on_rabbitmq \
+  rabbitmqadmin --quiet declare queue name=sample-queue auto_delete=false durable=true
+
+echo "Binding RabbitMQ queue to exchange ..."
+on_rabbitmq \
+  rabbitmqadmin --quiet declare binding source=minio destination=sample-queue routing_key='#'
+
+echo "Configuring MinIO AMQP notifications .."
+on_minio \
+  setup-amqp-notifications
+
+echo "Creating MinIO bucket ..."
+on_minio \
+  mc --quiet --no-color mb minio/sample-bucket
+
+echo "Configuring MinIO bucket notifications ..."
+on_minio \
+  mc --quiet --no-color event add minio/sample-bucket arn:minio:sqs::1:amqp
