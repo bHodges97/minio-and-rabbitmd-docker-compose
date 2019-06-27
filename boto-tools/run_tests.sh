@@ -5,7 +5,7 @@ S3_KEY=minio
 S3_SECRET=miniosecretkey
 NETWORK='composetest_default'
 TEST_FILE="/tmp/big-file"
-TEST_CMD='python -m pytest .'
+TEST_CMD='pytest .'
 #TEST_CMD='python test_benchmark.py'
 IMAGE='hackathon/python'
 
