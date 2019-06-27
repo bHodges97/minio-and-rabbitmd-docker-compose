@@ -27,11 +27,3 @@ services:
     volumes:
       - /etc/rabbitmq
     read_only: true
-
-  botoutils:
-    depends_on:
-      - minio
-    image: hackathon/python
-    command: python -m pytest .
-    volumes:
-      - ./bigfile:/code/bigfile
