@@ -5,7 +5,7 @@ set -eu
 here="$(cd $(dirname $0) && pwd)"
 
 function docker_compose() {
-  (cd ${here} && docker-compose --log-level ERROR --no-ansi "$@")
+  (cd ${here} && docker-compose --no-ansi "$@")
 }
 
 function on_minio() {
@@ -33,7 +33,7 @@ docker build \
        ${here}
 
 echo "Starting Docker Compose environment ..."
-docker_compose up --detach
+docker_compose up -d
 
 echo "Waiting for RabbitMQ ..."
 wait_for rabbitmq:5672
