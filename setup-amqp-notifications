@@ -1,0 +1,24 @@
+#!/bin/sh
+
+set -eu
+
+# For some reason the output of the first invocation of `mc admin
+# config get` cannot be parsed by `jq`, so run it once and discard it.
+mc --quiet --no-color admin config get minio > /dev/null 2>&1
+
+mc --quiet --no-color admin config get minio |
+  jq '.notify.amqp."1".autoDeleted = false' |
+  jq '.notify.amqp."1".deliveryMode = 2' |
+  jq '.notify.amqp."1".durable = true' |
+  jq '.notify.amqp."1".enable = true' |
+  jq '.notify.amqp."1".exchange = "minio"' |
+  jq '.notify.amqp."1".exchangeType = "topic"' |
+  jq '.notify.amqp."1".immediate = false' |
+  jq '.notify.amqp."1".internal = false' |
+  jq '.notify.amqp."1".mandatory = false' |
+  jq '.notify.amqp."1".noWait = false' |
+  jq '.notify.amqp."1".routingKey = "events"' |
+  jq '.notify.amqp."1".url = "amqp://guest:guest@rabbitmq:5672"' |
+mc --quiet --no-color admin config set minio
+
+mc --quiet --no-color admin service restart minio
