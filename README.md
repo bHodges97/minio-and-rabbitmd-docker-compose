@@ -60,7 +60,7 @@ credentials:
 ## Accessing the RabbitMQ instance
 
 The RabbitMQ UI is available at http://localhost:15672, with the
-followig credentials:
+following credentials:
 
 * Username: `guest`
 * Password: `guest`
@@ -74,3 +74,13 @@ queue `sample-queue` with routing key `#`.
 
 S3 events on `sample-bucket` are propagated to the AMQP queue
 `sample-queue`.
+
+## BOTO3 Tests and Benchmark
+Place a 100 MB test file in the boto-tools/data/ directory and then run run_tests.sh from within the boto-tools directory.
+Test results are stored in boto-tools/data.
+```
+$ cd boto-tools/data
+$ dd if=/dev/zero of=bigfile.txt count=1 bs=100M
+$ cd ..
+$ ./run_test.sh
+```
